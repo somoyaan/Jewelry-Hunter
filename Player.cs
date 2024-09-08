@@ -13,26 +13,54 @@ public class Player : MonoBehaviour
     float jumpPower;
     public LayerMask groundLayer;
     bool onGround;
+    public static string gameState;
+
+    // アニメーション
+    Animator animator;
+    public string oldAnime;
+    public string nowAnime;
+    public string stopAnime = "PlayerStop";
+    public string moveAnime = "PlayerMove";
+    public string jumpAnime = "PlayerJump";
+    public string clearAnime = "PlayerClear";
+    public string deadAnime = "PlayerDead";
 
 
     // Start is called before the first frame update
     void Start()
     {
+        gameState = "playing";
         rbody = GetComponent<Rigidbody2D>();
         axisH = 0.0f;
         onGround = false;
+        animator = GetComponent<Animator>();
+        oldAnime = stopAnime;
+        nowAnime = stopAnime;
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (gameState != "playing") return;
         Move();
         Jump();
     }
 
     void FixedUpdate()
     {
+        if (gameState != "playing") return;
         onGround = Physics2D.Linecast(transform.position, transform.position - (transform.up * 0.1f), groundLayer);
+        if (onGround)
+        {
+            if (axisH == 0) nowAnime = stopAnime;
+            else nowAnime = moveAnime;
+        }
+        else nowAnime = jumpAnime;
+        if (oldAnime != nowAnime)
+        {
+            oldAnime = nowAnime;
+            animator.Play(nowAnime);
+        }
     }
 
     //移動メソッド
@@ -53,4 +81,28 @@ public class Player : MonoBehaviour
             rbody.AddForce(setJumpPower, ForceMode2D.Impulse);
         }
     }
+    private void OnTriggerEnter2D(Collider2D col)
+    {
+        if (col.gameObject.tag == "Goal")
+        {
+            animator.Play(clearAnime);
+            gameState = "gameClear";
+            rbody.velocity = new Vector2(0, 0);
+        }
+        if (col.gameObject.tag == "Dead")
+        {
+            GameOver();
+        }
+    }
+
+    // ゲームオーバーメソッド
+    private void GameOver()
+    {
+        animator.Play(deadAnime);
+        rbody.velocity = new Vector2(0, 0);
+        rbody.AddForce(new Vector2(0, 4), ForceMode2D.Impulse);
+        GetComponent<CapsuleCollider2D>().enabled = false;
+        gameState = "gameOver";
+    }
 }
+
