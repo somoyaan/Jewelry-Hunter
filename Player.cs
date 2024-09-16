@@ -94,6 +94,13 @@ public class Player : MonoBehaviour
             GameOver();
         }
     }
+    private void OnCollisionEnter2D(Collision2D col)
+    {
+        if (col.gameObject.tag == "Dead")
+        {
+            GameOver();
+        }
+    }
 
     // ゲームオーバーメソッド
     private void GameOver()
